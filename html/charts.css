@@ -1,0 +1,87 @@
+#container {
+  margin: 20px auto;
+  text-align: center;
+}
+#charts td {
+  width: 700px;
+}
+.chart h3 {
+  background-color: #BFC9CA;
+  text-align: left;
+  padding-left: 20px;
+  border-bottom: 2px solid #5F6A6A;
+  border-right: 2px solid #5F6A6A;
+  margin-bottom: 4px;
+  margin-right: 4px;
+  margin-left: 20px;
+  font-size: 1.2em;
+}
+.ct-horizontal {
+  color: #283747;
+}
+.ct-horizontal a {
+  text-decoration: underline;
+}
+.ct-horizontal a:hover {
+  text-decoration: none;
+}
+#loading {
+  position: fixed;
+  top: -24px;
+  right: 0px;
+}
+.ct-series.ct-series-a .ct-bar { stroke: #B03A2E; }
+.ct-series.ct-series-b .ct-bar { stroke: #E74C3C; }
+.ct-series.ct-series-c .ct-bar { stroke: #196F3D; }
+.ct-series.ct-series-d .ct-bar { stroke: #27AE60; }
+.ct-series.ct-series-a .ct-line, .ct-series.ct-series-a .ct-point, .ct-legend .ct-series-0:before { stroke: #27AE60; }
+.ct-legend .ct-series-0:before { background-color: #27AE60; }
+.ct-series.ct-series-b .ct-line, .ct-series.ct-series-b .ct-point, .ct-legend .ct-series-1:before { stroke: #F39C12; }
+.ct-legend .ct-series-1:before { background-color: #F39C12; }
+.ct-series.ct-series-c .ct-line, .ct-series.ct-series-c .ct-point, .ct-legend .ct-series-2:before { stroke: #3498DB; }
+.ct-legend .ct-series-2:before { background-color: #3498DB; }
+
+.ct-chart {
+    position: relative;
+    width: 642px;
+    height: 340px;
+}
+.ct-axis-title {
+    font-size: 0.9em;
+}
+.ct-legend {
+    position: absolute;
+    z-index: 10;
+    list-style: none;
+    text-align: left;
+    float: right;
+    top: 136px;
+    left: 60px;
+}
+.ct-legend li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.ct-legend li:before {
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    left: 0;
+    top: 5px;
+    content: '';
+    border: 3px solid transparent;
+    border-radius: 2px;
+}
+.ct-legend li.inactive:before {
+    background: transparent;
+}
+.ct-legend.ct-legend-inside {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+.ct-label {
+   font-size: 0.7em;
+}

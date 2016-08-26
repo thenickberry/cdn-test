@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <script src="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script src="chartist-plugin-legend.js"></script>
+    <script src="chartist-plugin-axistitle.js"></script>
+    <script src="chartist-plugin-pointlabels.js"></script>
+    <script src="chartist-plugin-barlabels.js"></script>
+    <link rel="stylesheet" href="http://htmlcolorcodes.com/assets/stylesheets/all-916151b5.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="charts.css">
+  </head>
+  <body style='background-color: #fff'>
+    <div id="container">
+        <div id='loading' style='display: none'><img src='loading.gif'></div>
+        <table id='charts'></table>
+    </div>
+
+    <script type="text/javascript">
+        line_options = {
+            stackBars: true,
+            high: 100,
+            low: 0,
+            height: 320,
+            width: 700,
+            fullWidth: true,
+            chartPadding: {
+                right: 40
+            },
+            series: {
+                //'Akamai': { showPoint: false }
+            }, 
+            plugins: [
+                Chartist.plugins.legend(),
+                Chartist.plugins.ctPointLabels({
+                  textAnchor: 'middle',
+                  labelInterpolationFnc: function(value) { if (value > 0) { return value.toFixed(0) } else { return '' }},
+                  labelOffset: {
+                    x: 0,
+                    y: 18
+                  },
+                })
+            ]
+        }
+        var bar_options = {
+            height: 320,
+            width: 700,
+            seriesBarDistance: 10,
+            reverseData: true,
+            horizontalBars: true,
+            axisY: {
+                offset: 98
+            },
+            axisX: {
+                type: Chartist.FixedScaleAxis,
+                divisor: 8,
+                low: 0,
+                high: 1
+            },
+            plugins: [
+                Chartist.plugins.ctBarLabels({
+                    textAnchor: 'left'
+                }),
+                Chartist.plugins.ctAxisTitle({
+                    axisX: {
+                        axisTitle: '(seconds)',
+                        axisClass: 'ct-axis-title',
+                        offset: {
+                            x: 0,
+                            y: 34
+                        },
+                        textAnchor: 'middle'
+                    }
+                })
+            ]
+        }
+        // $.ajax({
+        //   url: "/cdn-test/dates.php",
+        //   dataType: 'json',
+        //   success: function(data){
+        //       var select = $("<select/>", { name: "date" }).change(function(){ build_line_charts(this.value) });
+        //       select.append($("<option/>", { "value": "", html: "all" }));
+        //       $.each(data, function(k,v) {
+        //           select.append($("<option/>", { "value": v, html: v }));
+        //       });
+        //       select.appendTo("#dates");
+        //   }
+        // });
+
+        var build_line_charts = function(host, domain_codes, date) {
+            date = date || '';
+            url = "/cdn-test/hit-report.php?host=" + host + "&domain_codes=" + domain_codes;
+            if (date) {
+                url = url + '&date=' + date;
+            }
+            $('#loading').show();
+            $.ajax({
+              url: url,
+              dataType: 'json',
+              success: function(data){
+                  chart_div_id = '#chart-'+host;
+                  $(chart_div_id).empty();
+                  var labels = ['30s', '10m', '30m', '1h', '6h', '12h', '1d', '3d', '1w'];
+                  var intervals = ['30', '600', '1800', '3600', '21600', '43200', '86400', '259200', '604800'];
+                  var series = []
+                  $.each(data, function(k,v) {
+                      switch(k) {
+                          case 'akam': name = 'Akamai'; break;
+                          case 'cccc': name = 'ChinaCache'; break;
+                          case 'ecst': name = 'Edgecast'; break;
+                          case 'fstl': name = 'Fastly'; break;
+                          case 'qtil': name = 'Quantil'; break;
+                          default: name = 'UNKNOWN'; break;
+                      }
+                      var series_data = [];
+                      $.each(intervals, function(i, interval){
+                          series_data.push(v[interval]);
+                      });
+                      series.push({ name: name, data: series_data });
+
+                  });
+                  new Chartist.Line(chart_div_id, { labels: labels, series: series }, line_options);
+                  $('#loading').hide();
+              }
+            });
+        }
+        var build_bar_charts = function(host, domain_codes, date) {
+            date = date || '';
+            url = "/cdn-test/perf-report.php?host=" + host + "&domain_codes=" + domain_codes;
+            if (date) {
+                url = url + '&date=' + date;
+            }
+            $('#loading').show();
+            var domain_codes = domain_codes.split(",");
+            var labels = [];
+            for (x in domain_codes) {
+                switch(domain_codes[x]) {
+                    case 'akam': name = 'Akamai'; break;
+                    case 'cccc': name = 'ChinaCache'; break;
+                    case 'ecst': name = 'Edgecast'; break;
+                    case 'fstl': name = 'Fastly'; break;
+                    case 'qtil': name = 'Quantil'; break;
+                    default: name = 'UNKNOWN'; break;
+                }
+                labels.push(name);
+            }
+            $.ajax({
+              url: url,
+              dataType: 'json',
+              success: function(data){
+
+                  var series_hit_avg = [];
+                  $.each(data['hit_avg'], function(k,v) { if (v === false) { v=0; } series_hit_avg.push(v); });
+                  var series_hit_50pct = [];
+                  $.each(data['hit_50pct'], function(k,v) { if (v === false) { v=0; } series_hit_50pct.push(v); });
+                  var series_hit_90pct = [];
+                  $.each(data['hit_90pct'], function(k,v) { if (v === false) { v=0; } series_hit_90pct.push(v); });
+
+                  var series_miss_avg = [];
+                  $.each(data['miss_avg'], function(k,v) { if (v === false) { v=0; } series_miss_avg.push(v); });
+                  var series_miss_50pct = [];
+                  $.each(data['miss_50pct'], function(k,v) { if (v === false) { v=0; } series_miss_50pct.push(v); });
+                  var series_miss_90pct = [];
+                  $.each(data['miss_90pct'], function(k,v) { if (v === false) { v=0; } series_miss_90pct.push(v); });
+
+                  new Chartist.Bar('#perf-chart-'+host, { labels: labels, series: [
+                      series_hit_50pct,
+                      series_hit_90pct,
+                      series_miss_50pct,
+                      series_miss_90pct
+                  ]}, bar_options);
+                  $('#loading').hide();
+              }
+            });
+        }
+        var hosts = [
+            'linode-fremont',
+            'linode-us-east',
+            'linode-eu-uk',
+            'ec2-ireland',
+            'linode-eu-de',
+            'azure-eu-nl',
+            'azure-eu-nl-a1',
+            'ec2-india',
+            'ec2-singapore',
+            'azure-apac-hk',
+            'samir-china'
+        ];
+        var x;
+        for (x in hosts) {
+            var host = hosts[x];
+            switch(host) {
+                case 'linode-fremont': chart_title = 'US West'; break;
+                case 'linode-us-east': chart_title = 'US East'; break;
+                case 'linode-eu-uk': chart_title = 'EU UK'; break;
+                case 'ec2-ireland': chart_title = 'EU Ireland'; break;
+                case 'linode-eu-de': chart_title = 'EU Germany'; break;
+                case 'azure-eu-nl': chart_title = 'EU Netherlands'; break;
+                case 'azure-eu-nl-a1': chart_title = 'EU Netherlands (test)'; break;
+                case 'ec2-india': chart_title = 'APAC (IN)'; break;
+                case 'ec2-singapore': chart_title = 'APAC (SG)'; break;
+                case 'azure-apac-hk': chart_title = 'APAC (HK)'; break;
+                case 'samir-china': chart_title = 'APAC (CN)'; break;
+                default: chart_title = 'UNKNOWN'; break;
+            }
+            chart_title = chart_title + " // " + host;
+            chart_div_id = 'chart-'+host
+            if ($('#'+chart_div_id).length == 0) {
+                 $("<tr><th colspan='2' style='text-align: center'><h3>"+chart_title+"</h3></th></tr><tr><td><div id='"+chart_div_id+"' class='ct-chart'></div></td><td><div id='perf-"+chart_div_id+"' class='ct-chart'></div></td></tr>").appendTo("#charts");
+            }
+            var domain_codes = 'akam,ecst,fstl';
+            if (host.indexOf('china') !== -1) {
+                domain_codes = 'cccc,qtil';
+            }
+            build_line_charts(host, domain_codes);
+            build_bar_charts(host, domain_codes);
+        }
+    </script>
+
+  </body>
+</html>
