@@ -8,6 +8,9 @@ $domain_codes = array('akam', 'cccc', 'ecst', 'fstl', 'qtil');
 if (isset($_GET['domain_codes'])) {
     $domain_codes = split(',', $_GET['domain_codes']);
 }
+if (isset($_GET['domain_code'])) {
+    $domain_code = $_GET['domain_code'];
+}
 
 if (isset($_GET['week'])) {
     $start = strtotime("2016W".$_GET['week']);
@@ -17,10 +20,26 @@ if (isset($_GET['date'])) {
     $start = strtotime($_GET['date']." 00:00:00");
     $end = $start + 86400;
 }
-$host = $_GET['host'];
 $data = array();
-foreach ($domain_codes as $domain_code) {
-    $data[$domain_code] = array();
+$hosts = array(
+    'linode-fremont',
+    'linode-us-east',
+    'linode-eu-uk',
+    'ec2-ireland',
+    'linode-eu-de',
+    'azure-eu-nl',
+    'azure-eu-nl-a1',
+    'ec2-india',
+    'ec2-singapore',
+    'azure-apac-hk',
+);
+
+if ($domain_code == 'cccc' || $domain_code == 'qtil') {
+    $hosts = array('samir-china');
+}
+
+foreach ($hosts as $host) {
+    $data[$host] = array();
     foreach ($intervals as $interval) {
         $total = 0;
         $hit = 0;
@@ -36,7 +55,7 @@ foreach ($domain_codes as $domain_code) {
             if (strpos(file_get_contents($filename),"HIT") !== false) $hit++;
             $total++;
         }
-        $data[$domain_code][$interval] = ($hit / $total) * 100;
+        $data[$host][$interval] = ($hit / $total) * 100;
     }
 }
 print json_encode($data);

@@ -9,6 +9,15 @@ if (isset($_GET['domain_codes'])) {
     $domain_codes = split(',',$_GET['domain_codes']);
 }
 
+if (isset($_GET['week'])) {
+    $start = strtotime("2016W".$_GET['week']);
+    $end = $start + (86400 * 7);
+}           
+if (isset($_GET['date'])) {
+    $start = strtotime($_GET['date']." 00:00:00");
+    $end = $start + 86400;
+}
+
 function get_percentile($percentile, $array) {
     sort($array);
     $index = ($percentile/100) * count($array);
@@ -31,13 +40,11 @@ foreach ($domain_codes as $domain_code) {
         $path = "results/${host}/${interval}/${domain_code}";
         $files = scandir($path);
         foreach ($files as $file) {
-            if (isset($_GET['date'])) {
-                $start = strtotime($_GET['date']." 00:00:00");
-                $end = $start + 86400;
+            if (strstr($file, ".")) continue;
+            if (isset($start) && isset($end)) {
                 if ((int)$file < (int)$start || (int)$file > (int)$end) continue;
             }
             $filename = $path."/".$file;
-            if (strstr($filename, ".")) continue;
             $contents = file_get_contents($filename);
             // if time_total is in the file, append to either $hit or $miss depending whether it was a hit or a miss
             if (strpos($contents,"time_total") !== false) {

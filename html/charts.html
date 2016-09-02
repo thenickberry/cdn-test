@@ -14,11 +14,12 @@
   <body style='background-color: #fff'>
     <div id="container">
         <div id='loading' style='display: none'><img src='loading.gif'></div>
+        <div id='weeks'></div>
         <table id='charts'></table>
     </div>
 
     <script type="text/javascript">
-        line_options = {
+        var line_options = {
             stackBars: true,
             high: 100,
             low: 0,
@@ -75,26 +76,26 @@
                 })
             ]
         }
-        // $.ajax({
-        //   url: "/cdn-test/dates.php",
-        //   dataType: 'json',
-        //   success: function(data){
-        //       var select = $("<select/>", { name: "date" }).change(function(){ build_line_charts(this.value) });
-        //       select.append($("<option/>", { "value": "", html: "all" }));
-        //       $.each(data, function(k,v) {
-        //           select.append($("<option/>", { "value": v, html: v }));
-        //       });
-        //       select.appendTo("#dates");
-        //   }
-        // });
 
-        var build_line_charts = function(host, domain_codes, date) {
-            date = date || '';
+        $.ajax({
+          url: "/cdn-test/weeks.php",
+          dataType: 'json',
+          success: function(data){
+              var select = $("<select/>", { name: "week" }).change(function(){ build_charts(this.value) });
+              select.append($("<option/>", { "value": "", html: "all" }));
+              $.each(data, function(k,v) {
+                  select.append($("<option/>", { "value": v, html: 'Week '+v }));
+              });
+              select.appendTo("#weeks");
+          }
+        });
+
+        var build_line_charts = function(host, domain_codes, week) {
+            week = week || '';
             url = "/cdn-test/hit-report.php?host=" + host + "&domain_codes=" + domain_codes;
-            if (date) {
-                url = url + '&date=' + date;
+            if (week) {
+                url = url + '&week=' + week;
             }
-            $('#loading').show();
             $.ajax({
               url: url,
               dataType: 'json',
@@ -121,17 +122,15 @@
 
                   });
                   new Chartist.Line(chart_div_id, { labels: labels, series: series }, line_options);
-                  $('#loading').hide();
               }
             });
         }
-        var build_bar_charts = function(host, domain_codes, date) {
-            date = date || '';
+        var build_bar_charts = function(host, domain_codes, week) {
+            week = week || '';
             url = "/cdn-test/perf-report.php?host=" + host + "&domain_codes=" + domain_codes;
-            if (date) {
-                url = url + '&date=' + date;
+            if (week) {
+                url = url + '&week=' + week;
             }
-            $('#loading').show();
             var domain_codes = domain_codes.split(",");
             var labels = [];
             for (x in domain_codes) {
@@ -170,7 +169,6 @@
                       series_miss_50pct,
                       series_miss_90pct
                   ]}, bar_options);
-                  $('#loading').hide();
               }
             });
         }
@@ -187,35 +185,40 @@
             'azure-apac-hk',
             'samir-china'
         ];
-        var x;
-        for (x in hosts) {
-            var host = hosts[x];
-            switch(host) {
-                case 'linode-fremont': chart_title = 'US West'; break;
-                case 'linode-us-east': chart_title = 'US East'; break;
-                case 'linode-eu-uk': chart_title = 'EU UK'; break;
-                case 'ec2-ireland': chart_title = 'EU Ireland'; break;
-                case 'linode-eu-de': chart_title = 'EU Germany'; break;
-                case 'azure-eu-nl': chart_title = 'EU Netherlands'; break;
-                case 'azure-eu-nl-a1': chart_title = 'EU Netherlands (test)'; break;
-                case 'ec2-india': chart_title = 'APAC (IN)'; break;
-                case 'ec2-singapore': chart_title = 'APAC (SG)'; break;
-                case 'azure-apac-hk': chart_title = 'APAC (HK)'; break;
-                case 'samir-china': chart_title = 'APAC (CN)'; break;
-                default: chart_title = 'UNKNOWN'; break;
-            }
-            chart_title = chart_title + " // " + host;
-            chart_div_id = 'chart-'+host
-            if ($('#'+chart_div_id).length == 0) {
+        var build_charts = function(week) {
+            $('#loading').show();
+            var x;
+            for (x in hosts) {
+                var host = hosts[x];
+                switch(host) {
+                    case 'linode-fremont': chart_title = 'US West'; break;
+                    case 'linode-us-east': chart_title = 'US East'; break;
+                    case 'linode-eu-uk': chart_title = 'EU UK'; break;
+                    case 'ec2-ireland': chart_title = 'EU Ireland'; break;
+                    case 'linode-eu-de': chart_title = 'EU Germany'; break;
+                    case 'azure-eu-nl': chart_title = 'EU Netherlands'; break;
+                    case 'azure-eu-nl-a1': chart_title = 'EU Netherlands (test)'; break;
+                    case 'ec2-india': chart_title = 'APAC (IN)'; break;
+                    case 'ec2-singapore': chart_title = 'APAC (SG)'; break;
+                    case 'azure-apac-hk': chart_title = 'APAC (HK)'; break;
+                    case 'samir-china': chart_title = 'APAC (CN)'; break;
+                    default: chart_title = 'UNKNOWN'; break;
+                }
+                chart_title = chart_title + " // " + host;
+                chart_div_id = 'chart-'+host
+                if ($('#'+chart_div_id).length == 0) {
                  $("<tr><th colspan='2' style='text-align: center'><h3>"+chart_title+"</h3></th></tr><tr><td><div id='"+chart_div_id+"' class='ct-chart'></div></td><td><div id='perf-"+chart_div_id+"' class='ct-chart'></div></td></tr>").appendTo("#charts");
+                }
+                var domain_codes = 'akam,ecst,fstl';
+                if (host.indexOf('china') !== -1) {
+                    domain_codes = 'cccc,qtil';
+                }
+                build_line_charts(host, domain_codes, week);
+                build_bar_charts(host, domain_codes, week);
             }
-            var domain_codes = 'akam,ecst,fstl';
-            if (host.indexOf('china') !== -1) {
-                domain_codes = 'cccc,qtil';
-            }
-            build_line_charts(host, domain_codes);
-            build_bar_charts(host, domain_codes);
+            $('#loading').hide();
         }
+        build_charts();
     </script>
 
   </body>

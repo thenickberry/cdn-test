@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <script src="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <link rel="stylesheet" href="http://htmlcolorcodes.com/assets/stylesheets/all-916151b5.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  </head>
+  <body style='background-color: #fff'>
+    <div id="container">
+        <div id='loading' style='display: none'><img src='loading.gif'></div>
+        <h3>hit versus miss per interval</h3><br/>
+        <div id='dates'>Dates:&nbsp;</div><br/>
+        <div id='charts'></div>
+    </div>
+
+    <script type="text/javascript">
+        options = {
+            high: 100,
+            low: 0,
+            height: 180,
+            width: 540,
+            stackBars: true
+        }
+        $.ajax({
+          url: "/cdn-test/dates.php",
+          dataType: 'json',
+          success: function(data){
+              var select = $("<select/>", { name: "date" }).change(function(){ build_charts(this.value) });
+              select.append($("<option/>", { "value": "", html: "all" }));
+              $.each(data, function(k,v) {
+                  select.append($("<option/>", { "value": v, html: v }));
+              });
+              select.appendTo("#dates");
+          }
+        });
+
+        var build_charts = function(date) {
+            date = date || '';
+            url = "/cdn-test/hit-miss-report.php"
+            if (date) {
+                url = url + '?date=' + date;
+            }
+            $('#loading').show();
+            $.ajax({
+              url: url,
+              dataType: 'json',
+              success: function(data){
+                  $("#charts").empty();
+                  $.each(data, function(k,v) {
+                      var div_id = "c" + k;
+                      switch(k) {
+                          case '30': div_title = '30 seconds'; break;
+                          case '600': div_title = '10 minutes'; break;
+                          case '1800': div_title = '30 minutes'; break;
+                          case '3600': div_title = '1 hour'; break;
+                          case '21600': div_title = '6 hours'; break;
+                          case '43200': div_title = '12 hours'; break;
+                          case '86400': div_title = '1 day'; break;
+                          case '259200': div_title = '3 days'; break;
+                          case '604800': div_title = '1 week'; break;
+                          default: div_title = 'UNKNOWN'; break;
+                      }
+                      div_title = div_title + ' // ' + v['akam']['total'] + ' results';
+                      var div = $("<div/>",{ "class": "chart"}).append($("<h3/>",{ html: div_title }));
+                      div.append($("<div/>",{ "class": "ct-chart", "id": div_id }));
+                      div.appendTo("#charts");
+
+                      var labels = [];
+                      var series_hit = [];
+                      var series_miss = [];
+                      $.each(v, function(domain_code, domain_result){
+                          report_url = '/cdn-test/' + k + '-' + domain_code + '.html';
+                          switch(domain_code) {
+                              case 'akam': label = 'Akamai'; break;
+                              case 'cccc': label = 'ChinaCache'; break;
+                              case 'ecst': label = 'Edgecast'; break;
+                              case 'fstl': label = 'Fastly'; break;
+                              case 'llnw': label = 'Limelight'; break;
+                              case 'qtil': label = 'Quantil'; break;
+                              default: label = 'UNKNOWN'; break;
+                          }
+                          labels.push('<a href='+report_url+'>'+label+'</a>');
+                          series_hit.push(domain_result["hit_pct"]);
+                          series_miss.push(domain_result["miss_pct"]);
+                      });
+
+                      new Chartist.Bar("#"+div_id, { labels: labels, series: [ series_hit, series_miss ]}, options).on(
+                        'draw', function(data) {
+                            if(data.type === 'bar') {
+                                data.element.attr({
+                                    style: 'stroke-width: 30px'
+                                });
+                            }
+                      });
+                    $('#loading').hide();
+                })}
+            });
+        }
+        build_charts();
+    </script>
+
+    <style>
+    #container {
+      width: 1100px;
+      margin: 20px auto;
+      text-align: center;
+    }
+    .chart {
+      float: left;
+    }
+    .chart h3 {
+      background-color: #BFC9CA;
+      text-align: left;
+      padding-left: 20px;
+      border-bottom: 2px solid #5F6A6A;
+      border-right: 2px solid #5F6A6A;
+      margin-bottom: 4px;
+      margin-right: 4px;
+      margin-left: 20px;
+      font-size: 1.2em;
+    }
+    .ct-series-a .ct-bar {
+      stroke: #27AE60;
+    }
+
+    .ct-series-b .ct-bar {
+      stroke: #E74C3C;
+    }
+    .ct-horizontal {
+      color: #283747;
+    }
+    .ct-horizontal a {
+      text-decoration: underline;
+    }
+    .ct-horizontal a:hover {
+      text-decoration: none;
+    }
+    #loading {
+      position: fixed;
+      top: -24px;
+      right: 0px;
+    }
+    </style>
+  </body>
+</html>
