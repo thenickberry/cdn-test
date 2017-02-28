@@ -1,1 +1,1 @@
-# cdnjudge
+# cdn-test
