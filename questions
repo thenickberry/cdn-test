@@ -1,0 +1,15 @@
+performance
+- how consistent is the performance of a node to an origin?
+- what is the contributing factor to the bottom percentile?
+
+node -> origin -> pop consistency
+
+linkedin edge cache
+- which nodes indicate that edge cache is present?
+- which pops have edge cache installed and enabled?
+
+why would pop not be present?
+- may be failed connections
+# select concat(node,'/',frequency,'/',origin,'/',timestamp) as file, fabric from records where pop='' order by file;
+
+frequency of connection issues

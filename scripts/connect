@@ -1,0 +1,18 @@
+#!/bin/bash
+
+US_NODES="linode-us-dallas linode-us-atlanta linode-us-fremont linode-us-newark"
+AP_NODES="linode-ap-singapore linode-ap-tokyo"
+EU_NODES="linode-eu-frankfurt linode-eu-london"
+
+NODES=$(egrep $1 ~/.ssh/config | awk '{ print $2 }')
+
+screen -dmS cdn-test-$1
+n=0
+for NODE in $NODES; do
+  ((n++))
+  TITLE=$(echo $NODE | sed "s/$1-//g")
+  screen -S cdn-test-$1 -X screen ${n}
+  screen -S cdn-test-$1 -p ${n} -X title "${TITLE}"
+  screen -S cdn-test-$1 -p ${n} -X exec ssh ${NODE}
+done
+screen -Rl cdn-test-$1
